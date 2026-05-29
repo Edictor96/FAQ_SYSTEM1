@@ -191,11 +191,15 @@
   font-size: 0.8rem;
   line-height: 1.4;
   color: var(--text-primary);
-  cursor: default;
+  cursor: pointer;
+  transition: border-color 0.12s ease, background 0.12s ease;
 }
 .ym-source-item:hover {
   border-color: var(--accent);
   background: var(--bg-card);
+}
+.ym-source-item:active {
+  transform: scale(0.98);
 }
 
 .ym-raise-btn {

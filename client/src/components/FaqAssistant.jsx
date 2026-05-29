@@ -23,44 +23,30 @@ export default function FaqAssistant() {
     }
   }, [messages]);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const q = query.trim();
+  const sendQuestion = async (q) => {
     if (!q || busy) return;
-
     setMessages(prev => [...prev, { role: 'user', text: q }]);
     setQuery('');
     setBusy(true);
-
     try {
       const data = await searchFAQs(q);
       const hasSources = data.sources?.length > 0;
       const isGeneric = data.answer?.includes("No relevant information found") || data.answer?.includes("lacks sufficient information");
-
       if (hasSources && !isGeneric) {
-        setMessages(prev => [...prev, {
-          role: 'assistant',
-          text: data.answer,
-          sources: data.sources,
-          confidence: data.confidence,
-        }]);
+        setMessages(prev => [...prev, { role: 'assistant', text: data.answer, sources: data.sources, confidence: data.confidence }]);
       } else {
-        setMessages(prev => [...prev, {
-          role: 'assistant',
-          text: "I couldn't find a confident answer in the FAQ system.",
-          noAnswer: true,
-          query: q,
-        }]);
+        setMessages(prev => [...prev, { role: 'assistant', text: "I couldn't find a confident answer in the FAQ system.", noAnswer: true, query: q }]);
       }
     } catch {
-      setMessages(prev => [...prev, {
-        role: 'assistant',
-        text: 'Something went wrong. Please try again.',
-        noAnswer: false,
-      }]);
+      setMessages(prev => [...prev, { role: 'assistant', text: 'Something went wrong. Please try again.', noAnswer: false }]);
     } finally {
       setBusy(false);
     }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    await sendQuestion(query.trim());
   };
 
   return (
@@ -111,7 +97,7 @@ export default function FaqAssistant() {
                   <div className="ym-sources">
                     <span className="ym-sources-label">RELATED FAQS</span>
                     {msg.sources.slice(0, 3).map((s, si) => (
-                      <div key={si} className="ym-source-item">{s.question}</div>
+                      <div key={si} className="ym-source-item" onClick={() => sendQuestion(s.question)} role="button" tabIndex={0} onKeyDown={e => e.key === 'Enter' && sendQuestion(s.question)}>{s.question}</div>
                     ))}
                   </div>
                 )}
