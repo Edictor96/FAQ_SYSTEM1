@@ -235,10 +235,7 @@ export default function UserPage() {
                   padding: '14px 20px', cursor: 'pointer', fontSize: 14, fontWeight: 500,
                   color: 'var(--text-primary)'
                 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span>{faq.question}</span>
-                    <span style={{ fontSize: 11, color: 'var(--text-muted)', background: 'var(--bg-secondary)', padding: '2px 8px', borderRadius: '10px', whiteSpace: 'nowrap', textTransform: 'capitalize' }}>{faq.category?.replace(/-/g, ' ')}</span>
-                  </div>
+                  {faq.question}
                 </summary>
                 <div style={{ padding: '0 20px 16px', fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.7 }}>
                   {faq.answer}
