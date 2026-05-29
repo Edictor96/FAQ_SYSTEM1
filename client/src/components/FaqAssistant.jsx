@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { searchFAQs } from '../api/searchApi';
 
-export default function YakshaMini() {
+export default function FaqAssistant() {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
@@ -70,7 +70,7 @@ export default function YakshaMini() {
           onClick={() => setOpen(true)}
           aria-label="Open Yaksha-mini chat"
         >
-          <span className="ym-launcher-tooltip">Ask Yaksha-mini</span>
+          <span className="ym-launcher-tooltip">Ask FAQ Assistant</span>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
           </svg>
@@ -86,7 +86,7 @@ export default function YakshaMini() {
               </svg>
             </span>
             <span className="ym-title-stack">
-              <span className="ym-title">Yaksha-mini</span>
+              <span className="ym-title">FAQ Assistant</span>
               <span className="ym-sub">
                 <span className="ym-online-dot" />
                 Answers from Samagama FAQs
@@ -99,7 +99,7 @@ export default function YakshaMini() {
         <div className="yaksha-mini-log" ref={logRef} role="log" aria-live="polite">
           {messages.length === 0 && (
             <div className="ym-welcome">
-              Hi — I'm Yaksha-mini. Ask me about the Vicharanashala internship — VINS, NOC, dates, certificates, and more.
+              Hi — I'm the FAQ Assistant. Ask me about the Vicharanashala internship — VINS, NOC, dates, certificates, and more.
             </div>
           )}
           {messages.map((msg, i) => (

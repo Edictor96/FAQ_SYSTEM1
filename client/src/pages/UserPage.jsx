@@ -5,7 +5,7 @@ import api from '../api/axios';
 import { searchFAQs, getSuggestions } from '../api/searchApi';
 import SearchBar from '../components/SearchBar';
 import SearchSuggestions from '../components/SearchSuggestions';
-import YakshaMini from '../components/YakshaMini';
+import FaqAssistant from '../components/FaqAssistant';
 import '../styles/search.css';
 import '../styles/yaksha.css';
 
@@ -384,7 +384,7 @@ export default function UserPage() {
           )}
         </div>
       </div>
-      <YakshaMini />
+      <FaqAssistant />
     </div>
   );
 }
