@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 
-const CLIENT_ID = '411209099641-5vc33p4ukqnmoo4h1tuvduc323hhc7jl.apps.googleusercontent.com';
+const CLIENT_ID = '595587356763-0pqkro6bjvh86sec3m34pr53ma51nrhh.apps.googleusercontent.com';
 
 export default function GoogleSignInButton({ onSuccess, onError, text = 'Sign in with Google' }) {
   const buttonRef = useRef(null);
