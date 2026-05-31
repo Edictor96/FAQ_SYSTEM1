@@ -20,18 +20,18 @@ const MyQuestions = () => {
     fetchMyQuestions();
   }, []);
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <div style={{ padding: 40, color: 'var(--text-muted)' }}>Loading...</div>;
 
   return (
-    <div>
-      <h2>My Questions</h2>
+    <div style={{ maxWidth: 800 }}>
+      <h2 style={{ fontSize: 24, fontWeight: 700, marginBottom: 4 }}>My Questions</h2>
       <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem' }}>Track the status of questions you've asked.</p>
 
       <div className="flex-col">
         {questions.length === 0 ? (
           <div className="glass-card" style={{ textAlign: 'center', padding: '3rem' }}>
             <p style={{ marginBottom: '1.5rem', color: 'var(--text-secondary)' }}>You haven't asked any questions yet.</p>
-            <Link to="/ask-question" className="btn-primary">Ask a Question</Link>
+            <Link to="/ask-question" className="btn-primary" style={{ textDecoration: 'none' }}>Ask a Question</Link>
           </div>
         ) : (
           questions.map(q => (
@@ -47,7 +47,7 @@ const MyQuestions = () => {
                   </span>
                 </div>
               </div>
-              <Link to={`/questions/${q._id}`} className="btn-primary" style={{ padding: '0.5rem 1rem' }}>
+              <Link to={`/questions/${q._id}`} className="btn-primary" style={{ padding: '0.5rem 1rem', textDecoration: 'none' }}>
                 View Answers
               </Link>
             </div>

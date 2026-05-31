@@ -1,9 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 
 const AuthContext = createContext(null);
-
 const STORAGE_KEY = 'rememberMe';
 
 function getStorage() {
@@ -25,10 +23,7 @@ export function AuthProvider({ children }) {
 
   const loadUser = useCallback(async () => {
     const token = getStorage().getItem('accessToken');
-    if (!token) {
-      setLoading(false);
-      return;
-    }
+    if (!token) { setLoading(false); return; }
     try {
       const { data } = await api.get('/auth/me');
       setUser(data.user);
@@ -39,9 +34,21 @@ export function AuthProvider({ children }) {
     }
   }, [clearAuth]);
 
+  useEffect(() => { loadUser(); }, [loadUser]);
+
+  // Refresh user points/data without full reload
+  const refreshUser = useCallback(async () => {
+    try {
+      const { data } = await api.get('/auth/me');
+      setUser(data.user);
+    } catch {}
+  }, []);
+
+  // Auto-refresh points every 30 seconds
   useEffect(() => {
-    loadUser();
-  }, [loadUser]);
+    const interval = setInterval(refreshUser, 5*60 * 1000);
+    return () => clearInterval(interval);
+  }, [refreshUser]);
 
   const handleTokens = (data, rememberMe = false) => {
     localStorage.setItem(STORAGE_KEY, rememberMe);
@@ -59,9 +66,7 @@ export function AuthProvider({ children }) {
 
   const register = async (name, email, password) => {
     const { data } = await api.post('/auth/register', {
-      name,
-      email,
-      password,
+      name, email, password,
       confirmPassword: password,
       termsAccepted: true,
     });
@@ -78,11 +83,7 @@ export function AuthProvider({ children }) {
   };
 
   const logout = async () => {
-    try {
-      await api.post('/auth/logout');
-    } catch {
-      // proceed with local logout even if API call fails
-    }
+    try { await api.post('/auth/logout'); } catch {}
     clearAuth();
   };
 
@@ -93,22 +94,16 @@ export function AuthProvider({ children }) {
 
   const resetPassword = async (token, password) => {
     const { data } = await api.put(`/auth/reset-password/${token}`, {
-      password,
-      confirmPassword: password,
+      password, confirmPassword: password,
     });
     return data;
   };
 
   const value = {
-    user,
-    loading,
-    login,
-    register,
-    googleLogin,
-    logout,
-    forgotPassword,
-    resetPassword,
-    clearAuth,
+    user, loading,
+    login, register, googleLogin, logout,
+    forgotPassword, resetPassword,
+    clearAuth, refreshUser,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -116,8 +111,6 @@ export function AuthProvider({ children }) {
 
 export function useAuth() {
   const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
+  if (!context) throw new Error('useAuth must be used within an AuthProvider');
   return context;
 }

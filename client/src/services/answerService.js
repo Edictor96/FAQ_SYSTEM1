@@ -28,12 +28,20 @@ const downvoteAnswer = async (id) => {
   return response.data;
 };
 
+const acceptAnswer = async (id) => {
+  const response = await api.put(`/answers/${id}/accept`);
+  return response.data;
+};
+
+
+
 const answerService = {
   createAnswer,
   getAnswersByQuestionId,
   deleteAnswer,
   upvoteAnswer,
-  downvoteAnswer
+  downvoteAnswer,
+  acceptAnswer
 };
 
 export default answerService;

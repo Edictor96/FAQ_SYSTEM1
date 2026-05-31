@@ -38,6 +38,7 @@ const sendTokens = (user, statusCode, res) => {
       email: user.email,
       role: user.role,
       isVerified: user.isVerified,
+      points: user.points || 0,
     },
   });
 };
@@ -286,6 +287,7 @@ exports.getMe = async (req, res) => {
       role: req.user.role,
       isVerified: req.user.isVerified,
       createdAt: req.user.createdAt,
+      points: req.user.points || 0,
     },
   });
 };

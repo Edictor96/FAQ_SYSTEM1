@@ -18,7 +18,11 @@ const questionSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     required: true,
     ref: 'User',
-  }
+  },
+  isGoodQuestion: {
+    type: Boolean,
+    default: false,
+  },
 }, { timestamps: true });
 
 module.exports = mongoose.model('Question', questionSchema);

@@ -13,6 +13,19 @@ const Sidebar = () => {
   }, [dark]);
 
   const isActive = (path) => location.pathname === path ? 'active' : '';
+  const isAdmin = user?.role === 'admin' || user?.role === 'super_admin';
+
+  const roleLabel = {
+    super_admin: 'Super Admin',
+    admin: 'Administrator',
+    intern: 'Member',
+  }[user?.role] || 'Member';
+
+  const roleBadgeStyle = {
+    super_admin: { background: 'rgba(234,179,8,0.15)', color: '#ca8a04' },
+    admin: { background: 'rgba(99,102,241,0.1)', color: 'var(--accent)' },
+    intern: { background: 'var(--accent-light)', color: 'var(--accent)' },
+  }[user?.role] || {};
 
   return (
     <div className="sidebar">
@@ -22,21 +35,41 @@ const Sidebar = () => {
       <div className="nav-links">
         <Link to="/user" className={`nav-item ${isActive('/user')}`}>FAQ Hub</Link>
         <Link to="/dashboard" className={`nav-item ${isActive('/dashboard')}`}>Dashboard</Link>
-        <Link to="/ask-question" className={`nav-item ${isActive('/ask-question')}`}>Ask Question</Link>
-        <Link to="/my-questions" className={`nav-item ${isActive('/my-questions')}`}>My Questions</Link>
+        {!isAdmin && (
+  <>
+    <Link to="/ask-question" className={`nav-item ${isActive('/ask-question')}`}>
+      Ask Question
+    </Link>
+
+    <Link to="/my-questions" className={`nav-item ${isActive('/my-questions')}`}>
+      My Questions
+    </Link>
+  </>
+)}
         <Link to="/answer-center" className={`nav-item ${isActive('/answer-center')}`}>Answer Center</Link>
-        {user?.role === 'admin' && (
+        <Link to="/leaderboard" className={`nav-item ${isActive('/leaderboard')}`}>Leaderboard</Link>
+        {isAdmin && (
           <Link to="/admin" className={`nav-item ${isActive('/admin')}`}>Admin Area</Link>
         )}
       </div>
       <div className="sidebar-footer">
-        <div className="user-info" style={{ overflow: 'hidden', marginBottom: 10 }}>
+        <div className="user-info" style={{ overflow: 'hidden', marginBottom: 6 }}>
           <div style={{ fontWeight: '600', color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
             title={user?.name || user?.email}>
             {user?.name || user?.email}
           </div>
-          <div style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>
-            {user?.role === 'admin' ? 'Administrator' : 'Member'}
+          <div style={{ fontSize: '0.8rem', marginBottom: 4 }}>
+            <span style={{
+              padding: '2px 8px', borderRadius: 20, fontSize: 11, fontWeight: 700,
+              ...roleBadgeStyle
+            }}>{roleLabel}</span>
+          </div>
+          <div style={{
+            display: 'inline-flex', alignItems: 'center', gap: 4,
+            background: 'var(--accent-light)', color: 'var(--accent)',
+            padding: '2px 8px', borderRadius: 20, fontSize: 12, fontWeight: 700, marginBottom: 6
+          }}>
+            ✨ {user?.points || 0} pts
           </div>
         </div>
         <button onClick={() => setDark(d => !d)} style={{

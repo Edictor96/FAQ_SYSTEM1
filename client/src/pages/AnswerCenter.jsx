@@ -10,7 +10,6 @@ const AnswerCenter = () => {
     const fetchQuestions = async () => {
       try {
         const data = await questionService.getQuestions();
-        // Show pending questions first, then answered
         const sorted = data.sort((a, b) => a.status === 'pending' ? -1 : 1);
         setQuestions(sorted);
       } catch (error) {
@@ -22,16 +21,16 @@ const AnswerCenter = () => {
     fetchQuestions();
   }, []);
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <div style={{ padding: 40, color: 'var(--text-muted)' }}>Loading...</div>;
 
   return (
-    <div>
-      <h2>Answer Center</h2>
+    <div style={{ maxWidth: 800 }}>
+      <h2 style={{ fontSize: 24, fontWeight: 700, marginBottom: 4 }}>Answer Center</h2>
       <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem' }}>Help the community by providing answers to open questions.</p>
 
       <div className="flex-col">
         {questions.length === 0 ? (
-          <p>No questions have been asked yet.</p>
+          <p style={{ color: 'var(--text-muted)' }}>No questions have been asked yet.</p>
         ) : (
           questions.map(q => (
             <div key={q._id} className="glass-card flex-between">
@@ -42,11 +41,14 @@ const AnswerCenter = () => {
                     {q.status.toUpperCase()}
                   </span>
                   <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                    By {q.author?.username || 'Unknown'}
+                    By {q.author?.name || q.author?.email || 'Unknown'}
+                  </span>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                    · {new Date(q.createdAt).toLocaleDateString()}
                   </span>
                 </div>
               </div>
-              <Link to={`/questions/${q._id}`} className="btn-primary" style={{ padding: '0.5rem 1rem' }}>
+              <Link to={`/questions/${q._id}`} className="btn-primary" style={{ padding: '0.5rem 1rem', textDecoration: 'none' }}>
                 View & Answer
               </Link>
             </div>

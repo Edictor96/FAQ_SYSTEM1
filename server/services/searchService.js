@@ -16,6 +16,9 @@ let chromaClient = null;
 let collection = null;
 let chromaAvailable = false;
 
+// In-memory embeddings cache
+const faqEmbeddingsCache = new Map();
+
 function initChroma() {
   if (chromaClient) return;
   try {
@@ -50,11 +53,39 @@ function cosineSimilarity(a, b) {
   return denom === 0 ? 0 : dot / denom;
 }
 
+async function buildEmbeddingsCache() {
+  const faqs = await Faq.find({}).select('_id question answer category').lean();
+  console.log(`Building embeddings cache for ${faqs.length} FAQs...`);
+  for (const faq of faqs) {
+    try {
+      const text = `${faq.question} ${faq.answer}`;
+      const embedding = await generateEmbedding(text);
+      faqEmbeddingsCache.set(faq._id.toString(), {
+        faqId: faq._id.toString(),
+        question: faq.question,
+        category: faq.category,
+        document: text,
+        embedding,
+      });
+    } catch { /* skip */ }
+  }
+  console.log(`Embeddings cache built: ${faqEmbeddingsCache.size} FAQs`);
+}
+
 async function indexFaq(faq) {
   if (!faq || !faq._id) throw new Error('Valid FAQ with _id is required');
 
   const text = `${faq.question} ${faq.answer}`;
   const embedding = await generateEmbedding(text);
+
+  // Update cache
+  faqEmbeddingsCache.set(faq._id.toString(), {
+    faqId: faq._id.toString(),
+    question: faq.question,
+    category: faq.category,
+    document: text,
+    embedding,
+  });
 
   const col = await ensureCollection();
   if (col) {
@@ -77,6 +108,7 @@ async function indexFaq(faq) {
 }
 
 async function deleteFaqIndex(faqId) {
+  faqEmbeddingsCache.delete(faqId.toString());
   const col = await ensureCollection();
   if (col) {
     try {
@@ -88,9 +120,7 @@ async function deleteFaqIndex(faqId) {
 }
 
 async function searchSimilar(query, limit = 5) {
-  if (!query || query.trim().length < 3) {
-    return [];
-  }
+  if (!query || query.trim().length < 3) return [];
 
   const queryEmbedding = await generateEmbedding(query);
   const col = await ensureCollection();
@@ -123,24 +153,21 @@ async function searchSimilar(query, limit = 5) {
     }
   }
 
-  const faqs = await Faq.find({ isPublished: true }).select('_id question answer category').lean();
-  const scored = [];
+  // Use cache instead of recomputing every time
+  if (faqEmbeddingsCache.size === 0) {
+    await buildEmbeddingsCache();
+  }
 
-  for (const faq of faqs) {
-    const text = `${faq.question} ${faq.answer}`;
-    try {
-      const faqEmbedding = await generateEmbedding(text);
-      const score = cosineSimilarity(queryEmbedding, faqEmbedding);
-      scored.push({
-        faqId: faq._id.toString(),
-        question: faq.question,
-        category: faq.category,
-        document: `${faq.question} ${faq.answer}`,
-        score: Math.round(score * 100) / 100,
-      });
-    } catch {
-      // skip individual FAQ on embedding error
-    }
+  const scored = [];
+  for (const [, faq] of faqEmbeddingsCache) {
+    const score = cosineSimilarity(queryEmbedding, faq.embedding);
+    scored.push({
+      faqId: faq.faqId,
+      question: faq.question,
+      category: faq.category,
+      document: faq.document,
+      score: Math.round(score * 100) / 100,
+    });
   }
 
   return scored.sort((a, b) => b.score - a.score).slice(0, limit);
@@ -180,7 +207,6 @@ async function generateAnswer(userQuery, sources) {
   }
 
   const systemPrompt = `You are a helpful FAQ assistant. Answer the user's question based only on the provided context. Be concise and direct. If the context has related information, use it to answer even if the wording is different.`;
-
   const userPrompt = `Context:\n${context}\n\nQuestion: ${userQuery}\n\nAnswer based only on the context above.`;
 
   try {
@@ -217,24 +243,23 @@ async function generateAnswer(userQuery, sources) {
 }
 
 async function indexAllFaqs() {
-  const faqs = await Faq.find({ isPublished: true }).lean();
+  const faqs = await Faq.find({}).lean();
   let indexed = 0;
 
   for (const faq of faqs) {
     try {
       await indexFaq(faq);
       indexed++;
-    } catch {
-      // skip individual failures during bulk index
-    }
+    } catch { /* skip */ }
   }
+
+  // Build in-memory cache on startup
+  await buildEmbeddingsCache();
 
   try {
     await indexOverview();
     indexed++;
-  } catch {
-    // overview index failed, non-critical
-  }
+  } catch { /* non-critical */ }
 
   return indexed;
 }
@@ -278,7 +303,7 @@ async function indexOverview() {
           metadatas: [{ faqId: sec.id, question: sec.title, category: 'programme-overview' }],
           documents: [text],
         });
-      } catch { /* skip individual */ }
+      } catch { /* skip */ }
     }
   }
 }
@@ -291,4 +316,5 @@ module.exports = {
   generateAnswer,
   indexAllFaqs,
   indexOverview,
+  buildEmbeddingsCache,
 };

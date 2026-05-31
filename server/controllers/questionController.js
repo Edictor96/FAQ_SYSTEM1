@@ -23,7 +23,7 @@ const createQuestion = async (req, res) => {
 // Get all questions
 const getQuestions = async (req, res) => {
   try {
-    const questions = await Question.find({}).populate('author', 'username email').sort({ createdAt: -1 });
+    const questions = await Question.find({}).populate('author', 'name email points').sort({ createdAt: -1 });
     res.json(questions);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -33,7 +33,7 @@ const getQuestions = async (req, res) => {
 // Get single question by ID
 const getQuestionById = async (req, res) => {
   try {
-    const question = await Question.findById(req.params.id).populate('author', 'username email');
+    const question = await Question.findById(req.params.id).populate('author', 'name email points');
     if (!question) {
       return res.status(404).json({ message: 'Question not found' });
     }

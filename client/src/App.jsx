@@ -15,6 +15,7 @@ import QuestionDetail from './pages/QuestionDetail';
 import AnswerCenter from './pages/AnswerCenter';
 import AdminArea from './pages/AdminArea';
 import './styles/auth.css';
+import Leaderboard from './pages/Leaderboard'
 
 export default function App() {
   return (
@@ -53,6 +54,7 @@ export default function App() {
             <Route path="/questions/:id" element={<QuestionDetail />} />
             <Route path="/answer-center" element={<AnswerCenter />} />
             <Route path="/admin" element={<AdminArea />} />
+	    <Route path="/leaderboard" element={<Leaderboard />} />
           </Route>
 
           {/* Redirects */}

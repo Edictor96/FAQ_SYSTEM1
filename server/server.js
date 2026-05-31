@@ -34,7 +34,7 @@ app.use(mongoSanitize());
 
 const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100,
+  max: 500,
   message: { success: false, message: 'Too many requests. Try again after 15 minutes.' },
   standardHeaders: true,
   legacyHeaders: false,
@@ -107,6 +107,29 @@ const startServer = async () => {
     app.listen(PORT, () => {
       console.log(`Server running on http://localhost:${PORT}`);
     });
+// Apply pending points every hour
+setInterval(async () => {
+  try {
+    const User = require('./models/User');
+    const now = new Date();
+    const users = await User.find({ 'pointsHistory.applied': false });
+    for (const user of users) {
+      let changed = false;
+      for (const entry of user.pointsHistory) {
+        if (!entry.applied && entry.appliedAt <= now) {
+          user.points = Math.max(0, (user.points || 0) + entry.points);
+          entry.applied = true;
+          changed = true;
+        }
+      }
+      if (changed) await user.save();
+    }
+    console.log('Points job ran successfully');
+  } catch (e) {
+    console.warn('Points job error:', e.message);
+  }
+}, 60 * 60 * 1000);
+
   } catch (err) {
     console.error('Failed to start server:', err.message);
     process.exit(1);
@@ -114,3 +137,25 @@ const startServer = async () => {
 };
 
 startServer();
+
+setInterval(async () => {
+  try {
+    const User = require('./models/User');
+    const now = new Date();
+    const users = await User.find({ 'pointsHistory.applied': false });
+
+    for (const user of users) {
+      let changed = false;
+      for (const entry of user.pointsHistory) {
+        if (!entry.applied && entry.appliedAt <= now) {
+          user.points = Math.max(0, (user.points || 0) + entry.points);
+          entry.applied = true;
+          changed = true;
+        }
+      }
+      if (changed) await user.save();
+    }
+  } catch (e) {
+    console.warn('Points job error:', e.message);
+  }
+}, 10 * 1000); 

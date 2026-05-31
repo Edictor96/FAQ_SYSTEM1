@@ -1,5 +1,6 @@
 const Answer = require('../models/Answer');
 const Question = require('../models/Question');
+const User = require('../models/User');
 
 // Create a new answer
 const createAnswer = async (req, res) => {
@@ -16,7 +17,6 @@ const createAnswer = async (req, res) => {
       author: req.user._id
     });
 
-    // Optionally update question status to answered
     await Question.findByIdAndUpdate(questionId, { status: 'answered' });
 
     res.status(201).json(answer);
@@ -29,8 +29,8 @@ const createAnswer = async (req, res) => {
 const getAnswersByQuestionId = async (req, res) => {
   try {
     const answers = await Answer.find({ question: req.params.questionId })
-      .populate('author', 'username')
-      .sort({ createdAt: 1 }); // Oldest first
+      .populate('author', 'name email points')
+      .sort({ createdAt: 1 });
     res.json(answers);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -57,15 +57,42 @@ const upvoteAnswer = async (req, res) => {
     const answer = await Answer.findById(req.params.id);
     if (!answer) return res.status(404).json({ message: 'Answer not found' });
 
-    // Check if user already upvoted
-    if (answer.upvotes.includes(req.user._id)) {
-      // Remove upvote (toggle)
+    const alreadyUpvoted = answer.upvotes.includes(req.user._id);
+
+    if (alreadyUpvoted) {
+      // Remove upvote (toggle off)
       answer.upvotes = answer.upvotes.filter(id => id.toString() !== req.user._id.toString());
     } else {
-      // Add upvote and remove downvote if exists
+      // Add upvote, remove downvote if exists
       answer.upvotes.push(req.user._id);
+      const hadDownvote = answer.downvotes.includes(req.user._id);
       answer.downvotes = answer.downvotes.filter(id => id.toString() !== req.user._id.toString());
+
+      // Award +5 points to answer author when they reach 5+ upvotes
+      if (answer.upvotes.length === 5) {
+        try {
+          const author = await User.findById(answer.author);
+          if (author) {
+            await author.awardPoints('answer_5_upvotes', 10, answer._id);
+          }
+        } catch (e) {
+          console.warn('Points award failed:', e.message);
+        }
+      }
+
+      // If removing a downvote, reverse the -5 penalty
+      if (hadDownvote) {
+        try {
+          const author = await User.findById(answer.author);
+          if (author) {
+            await author.awardPoints('downvote_removed', 5, answer._id);
+          }
+        } catch (e) {
+          console.warn('Points reversal failed:', e.message);
+        }
+      }
     }
+
     await answer.save();
     res.json(answer);
   } catch (error) {
@@ -79,16 +106,61 @@ const downvoteAnswer = async (req, res) => {
     const answer = await Answer.findById(req.params.id);
     if (!answer) return res.status(404).json({ message: 'Answer not found' });
 
-    // Check if user already downvoted
-    if (answer.downvotes.includes(req.user._id)) {
-      // Remove downvote (toggle)
+    const alreadyDownvoted = answer.downvotes.includes(req.user._id);
+
+    if (alreadyDownvoted) {
+      // Remove downvote (toggle off) — reverse the penalty
       answer.downvotes = answer.downvotes.filter(id => id.toString() !== req.user._id.toString());
+      try {
+        const author = await User.findById(answer.author);
+        if (author) {
+          await author.awardPoints('downvote_removed', 5, answer._id);
+        }
+      } catch (e) {
+        console.warn('Points reversal failed:', e.message);
+      }
     } else {
-      // Add downvote and remove upvote if exists
+      // Add downvote, remove upvote if exists
       answer.downvotes.push(req.user._id);
       answer.upvotes = answer.upvotes.filter(id => id.toString() !== req.user._id.toString());
+
+      // Award -5 points to answer author
+      try {
+        const author = await User.findById(answer.author);
+        if (author) {
+          await author.awardPoints('answer_downvoted', -5, answer._id);
+        }
+      } catch (e) {
+        console.warn('Points award failed:', e.message);
+      }
     }
+
     await answer.save();
+    res.json(answer);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Accept answer (Admin only) — +20 points
+const acceptAnswer = async (req, res) => {
+  try {
+    const answer = await Answer.findById(req.params.id);
+    if (!answer) return res.status(404).json({ message: 'Answer not found' });
+
+    answer.isAccepted = true;
+    await answer.save();
+
+    // Award +20 points to answer author
+    try {
+      const author = await User.findById(answer.author);
+      if (author) {
+        await author.awardPoints('answer_accepted', 20, answer._id);
+      }
+    } catch (e) {
+      console.warn('Points award failed:', e.message);
+    }
+
     res.json(answer);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -100,5 +172,6 @@ module.exports = {
   getAnswersByQuestionId,
   deleteAnswer,
   upvoteAnswer,
-  downvoteAnswer
+  downvoteAnswer,
+  acceptAnswer,
 };

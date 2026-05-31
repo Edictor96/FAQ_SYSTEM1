@@ -22,7 +22,11 @@ const answerSchema = new mongoose.Schema({
   downvotes: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
-  }]
+  }],
+  isAccepted: {
+    type: Boolean,
+    default: false,
+  },
 }, { timestamps: true });
 
 module.exports = mongoose.model('Answer', answerSchema);

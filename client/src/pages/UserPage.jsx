@@ -128,7 +128,7 @@ export default function UserPage() {
     setQuery(val);
     setSelectedIndex(-1);
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => fetchSuggestions(val), 300);
+    debounceRef.current = setTimeout(() => fetchSuggestions(val), 600);
   };
 
   const handleInputKeyDown = (e) => {
@@ -146,6 +146,17 @@ export default function UserPage() {
   };
 
   const handleLogout = async () => { await logout(); navigate('/login', { replace: true }); };
+
+  const isAdminOrSuper = user?.role === 'admin' || user?.role === 'super_admin';
+
+  const roleLabel = user?.role === 'super_admin' ? 'Super Admin'
+    : user?.role === 'admin' ? 'Administrator' : 'Member';
+
+  const roleBadgeStyle = user?.role === 'super_admin'
+    ? { background: 'rgba(234,179,8,0.15)', color: '#ca8a04' }
+    : user?.role === 'admin'
+    ? { background: 'rgba(99,102,241,0.1)', color: 'var(--accent)' }
+    : { background: 'var(--accent-light)', color: 'var(--accent)' };
 
   const showOverview = overviewOpen && !searchFaqIds;
   const displayedFaqs = searchFaqIds ? faqs.filter(f => searchFaqIds.includes(f._id)) : activeCategory ? faqs.filter(f => f.category === activeCategory) : faqs;
@@ -170,6 +181,7 @@ export default function UserPage() {
             { label: 'Ask Question', path: '/ask-question' },
             { label: 'My Questions', path: '/my-questions' },
             { label: 'Answer Center', path: '/answer-center' },
+            { label: 'Leaderboard', path: '/leaderboard' },
           ].map(({ label, path }) => (
             <a key={path} href={path} style={{
               padding: '10px 14px', borderRadius: 'var(--radius-sm)', fontSize: 14,
@@ -183,7 +195,7 @@ export default function UserPage() {
               {label}
             </a>
           ))}
-          {user?.role === 'admin' && (
+          {isAdminOrSuper && (
             <a href="/admin" style={{
               padding: '10px 14px', borderRadius: 'var(--radius-sm)', fontSize: 14,
               fontWeight: 500, color: 'var(--text-secondary)', textDecoration: 'none', transition: 'all 150ms ease'
@@ -195,8 +207,12 @@ export default function UserPage() {
           )}
         </div>
         <div style={{ padding: 16, borderTop: '1px solid var(--border)' }}>
-          <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 2, color: 'var(--text-primary)' }}>{user?.name}</div>
-          <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 10 }}>{user?.role === 'admin' ? 'Administrator' : 'Member'}</div>
+          <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 4, color: 'var(--text-primary)' }}>{user?.name}</div>
+          <div style={{ marginBottom: 10 }}>
+            <span style={{ padding: '2px 8px', borderRadius: 20, fontSize: 11, fontWeight: 700, ...roleBadgeStyle }}>
+              {roleLabel}
+            </span>
+          </div>
           <button onClick={() => setDark(d => !d)} style={{
             width: '100%', padding: '8px', marginBottom: 8,
             border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)',
