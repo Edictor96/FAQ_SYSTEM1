@@ -104,16 +104,14 @@ const AdminArea = () => {
     }
   };
 
-  const fetchPendingAnswers = async (page = 1) => {
-    setAnswersLoading(true);
-    try {
-      const { data } = await api.get(`/admin/answers/pending?page=${page}&limit=20`);
-      setPendingAnswers(data.answers || []);
-      setPendingAnswersPagination(data.pagination);
-      setAnswersPage(page);
-    } catch { setPendingAnswers([]); }
-    finally { setAnswersLoading(false); }
-  };
+  const fetchPendingAnswers = async () => {
+  setAnswersLoading(true);
+  try {
+    const { data } = await api.get('/answers');
+    setPendingAnswers(data || []);
+  } catch { setPendingAnswers([]); }
+  finally { setAnswersLoading(false); }
+};
 
   const handleApproveAnswer = async (id) => {
     try {
@@ -537,46 +535,79 @@ const AdminArea = () => {
 
       {/* Answer Center Tab */}
       {activeTab === 'answer center' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {answersLoading && <p style={{ color: 'var(--text-muted)' }}>Loading...</p>}
-          {!answersLoading && pendingAnswers.length === 0 && <p style={{ color: 'var(--text-muted)' }}>No pending answers 🎉</p>}
-          {pendingAnswers.map(a => (
-            <div key={a._id} style={{
-              background: 'var(--bg-card)', border: '1px solid var(--border)',
-              borderRadius: 'var(--radius-md)', padding: '16px 20px', transition: 'all 0.15s'
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16 }}>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 4 }}>{a.author?.name || 'Unknown'}</div>
-                  <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 8 }}>
-                    {a.author?.email} · {new Date(a.createdAt).toLocaleString()}
-                  </div>
-                  <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 6, whiteSpace: 'pre-wrap' }}>{a.content?.slice(0, 300)}{a.content?.length > 300 ? '...' : ''}</div>
-                  <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-                    Question: <strong>{a.question?.title || 'Deleted question'}</strong>
-                  </div>
-                </div>
-                <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-                  <button onClick={() => handleApproveAnswer(a._id)} style={{ padding: '7px 16px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--success)', background: 'rgba(16,185,129,0.08)', color: 'var(--success)', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>✓ Approve</button>
-                  <button onClick={() => handleRejectAnswer(a._id)} style={{ padding: '7px 16px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--error)', background: 'rgba(220,38,38,0.08)', color: 'var(--error)', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>✕ Reject</button>
-                </div>
-              </div>
+  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+    {answersLoading && <p style={{ color: 'var(--text-muted)' }}>Loading...</p>}
+    {!answersLoading && pendingAnswers.length === 0 && (
+      <p style={{ color: 'var(--text-muted)' }}>No answers yet.</p>
+    )}
+    {pendingAnswers.map(a => (
+      <div key={a._id} style={{
+        background: 'var(--bg-card)', border: '1px solid var(--border)',
+        borderRadius: 'var(--radius-md)', padding: '16px 20px'
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16 }}>
+          <div style={{ flex: 1 }}>
+            {a.isAccepted && (
+              <span style={{ background: 'rgba(16,185,129,0.1)', color: 'var(--success)', padding: '2px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, marginBottom: 8, display: 'inline-block' }}>
+                ✓ Accepted
+              </span>
+            )}
+            <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 2 }}>
+              {a.author?.name || 'Unknown'}
+              <span style={{ marginLeft: 8, fontSize: 11, color: 'var(--accent)' }}>⭐ {a.author?.points || 0} pts</span>
+              <RoleBadge role={a.author?.role || 'intern'} />
             </div>
-          ))}
-          {pendingAnswersPagination?.pages > 1 && (
-            <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginTop: 12 }}>
-              {Array.from({ length: pendingAnswersPagination.pages }, (_, i) => (
-                <button key={i + 1} onClick={() => fetchPendingAnswers(i + 1)} style={{
-                  padding: '6px 12px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)',
-                  background: answersPage === i + 1 ? 'var(--accent)' : 'transparent',
-                  color: answersPage === i + 1 ? '#fff' : 'var(--text-secondary)',
-                  fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit'
-                }}>{i + 1}</button>
-              ))}
+            <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 8 }}>
+              {a.author?.email} · {new Date(a.createdAt).toLocaleString()}
             </div>
-          )}
+            <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 6, whiteSpace: 'pre-wrap' }}>
+              {a.content?.slice(0, 300)}{a.content?.length > 300 ? '...' : ''}
+            </div>
+            <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+              On: <strong>{a.question?.title || 'Deleted question'}</strong>
+              <span style={{ marginLeft: 12, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+  <span style={{ color: 'var(--text-muted)', fontWeight: 700 }}>▲</span> {a.upvotes?.length || 0}
+  <span style={{ color: 'var(--text-muted)', fontWeight: 700, marginLeft: 6 }}>▼</span> {a.downvotes?.length || 0}
+</span>
+            </div>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flexShrink: 0 }}>
+            {!a.isAccepted && (
+              <button onClick={async () => {
+                try { await api.put(`/answers/${a._id}/accept`); fetchPendingAnswers(); }
+                catch { alert('Failed to accept'); }
+              }} style={{
+                padding: '7px 16px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--success)',
+                background: 'rgba(16,185,129,0.08)', color: 'var(--success)',
+                fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit'
+              }}>✓ Accept</button>
+            )}
+            <button onClick={async () => {
+              if (!window.confirm('Delete this answer?')) return;
+              try { await api.delete(`/answers/${a._id}`); fetchPendingAnswers(); }
+              catch { alert('Failed to delete'); }
+            }} style={{
+              padding: '7px 16px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--error)',
+              background: 'rgba(220,38,38,0.08)', color: 'var(--error)',
+              fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit'
+            }}>🗑 Delete</button>
+            {a.author?.role !== 'super_admin' && (
+              <button onClick={async () => {
+                if (!window.confirm(`Ban ${a.author?.name}? This will delete their account.`)) return;
+                try { await adminService.deleteUser(a.author._id); fetchPendingAnswers(); fetchData(); }
+                catch { alert('Failed to ban user'); }
+              }} style={{
+                padding: '7px 16px', borderRadius: 'var(--radius-sm)', border: '1px solid #f59e0b',
+                background: 'rgba(245,158,11,0.08)', color: '#f59e0b',
+                fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit'
+              }}>🚫 Ban</button>
+            )}
+          </div>
         </div>
-      )}
+      </div>
+    ))}
+  </div>
+)}
 
       {/* FAQ Manager Tab (super_admin only) */}
       {activeTab === 'faq manager' && isSuperAdmin && (

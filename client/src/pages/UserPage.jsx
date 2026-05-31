@@ -8,6 +8,7 @@ import SearchSuggestions from '../components/SearchSuggestions';
 import FaqAssistant from '../components/FaqAssistant';
 import '../styles/search.css';
 import '../styles/yaksha.css';
+import NotificationBell from '../components/NotificationBell';
 
 const CATEGORIES = [
   'about-internship', 'certificate', 'code-of-conduct', 'coursework-vibe',
@@ -177,11 +178,13 @@ export default function UserPage() {
         <div style={{ flex: 1, padding: 12, display: 'flex', flexDirection: 'column', gap: 4 }}>
           {[
             { label: 'FAQ Hub', path: '/user' },
-            { label: 'Dashboard', path: '/dashboard' },
-            { label: 'Ask Question', path: '/ask-question' },
-            { label: 'My Questions', path: '/my-questions' },
-            { label: 'Answer Center', path: '/answer-center' },
-            { label: 'Leaderboard', path: '/leaderboard' },
+{ label: 'Dashboard', path: '/dashboard' },
+...(!isAdminOrSuper ? [
+  { label: 'Ask Question', path: '/ask-question' },
+  { label: 'My Questions', path: '/my-questions' },
+] : []),
+{ label: 'Discussion Room', path: '/answer-center' },
+{ label: 'Leaderboard', path: '/leaderboard' },
           ].map(({ label, path }) => (
             <a key={path} href={path} style={{
               padding: '10px 14px', borderRadius: 'var(--radius-sm)', fontSize: 14,
@@ -243,10 +246,7 @@ export default function UserPage() {
             Dashboard / <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>FAQ Hub</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ cursor: 'pointer' }}>
-              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-              <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-            </svg>
+            <NotificationBell />
             <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, color: '#fff' }}>
               {user?.name?.charAt(0)?.toUpperCase()}
             </div>

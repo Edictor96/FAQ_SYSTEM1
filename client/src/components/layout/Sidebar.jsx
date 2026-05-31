@@ -33,25 +33,20 @@ const Sidebar = () => {
         <h2 style={{ fontSize: '1.2rem', lineHeight: '1.4' }}>Crowd Sourced FAQ Generation Web App</h2>
       </div>
       <div className="nav-links">
-        <Link to="/user" className={`nav-item ${isActive('/user')}`}>FAQ Hub</Link>
-        <Link to="/dashboard" className={`nav-item ${isActive('/dashboard')}`}>Dashboard</Link>
-        {!isAdmin && (
-  <>
-    <Link to="/ask-question" className={`nav-item ${isActive('/ask-question')}`}>
-      Ask Question
-    </Link>
-
-    <Link to="/my-questions" className={`nav-item ${isActive('/my-questions')}`}>
-      My Questions
-    </Link>
-  </>
-)}
-        <Link to="/answer-center" className={`nav-item ${isActive('/answer-center')}`}>Answer Center</Link>
-        <Link to="/leaderboard" className={`nav-item ${isActive('/leaderboard')}`}>Leaderboard</Link>
-        {isAdmin && (
-          <Link to="/admin" className={`nav-item ${isActive('/admin')}`}>Admin Area</Link>
-        )}
-      </div>
+  <Link to="/user" className={`nav-item ${isActive('/user')}`}>FAQ Hub</Link>
+  <Link to="/dashboard" className={`nav-item ${isActive('/dashboard')}`}>Dashboard</Link>
+  {!isAdmin && (
+    <>
+      <Link to="/ask-question" className={`nav-item ${isActive('/ask-question')}`}>Ask Question</Link>
+      <Link to="/my-questions" className={`nav-item ${isActive('/my-questions')}`}>My Questions</Link>
+    </>
+  )}
+  <Link to="/answer-center" className={`nav-item ${isActive('/answer-center')}`}>Discussion Room</Link>
+  <Link to="/leaderboard" className={`nav-item ${isActive('/leaderboard')}`}>Leaderboard</Link>
+  {isAdmin && (
+    <Link to="/admin" className={`nav-item ${isActive('/admin')}`}>Admin Area</Link>
+  )}
+</div>
       <div className="sidebar-footer">
         <div className="user-info" style={{ overflow: 'hidden', marginBottom: 6 }}>
           <div style={{ fontWeight: '600', color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
