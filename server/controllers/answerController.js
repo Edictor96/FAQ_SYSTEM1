@@ -198,7 +198,18 @@ const approveAnswer = async (req, res) => {
     if (!answer) return res.status(404).json({ message: 'Answer not found' });
 
     const question = await Question.findById(answer.question).select('author title');
-    if (question && question.author.toString() !== answer.author.toString()) {
+    if (question) {
+      if (question.author.toString() !== answer.author.toString()) {
+        const notif = await Notification.create({
+          recipient: question.author,
+          type: 'answer_approved',
+          title: 'Answer Approved on Your Question',
+          message: `An answer was approved on "${question.title.slice(0, 60)}"`,
+          link: `/questions/${answer.question}`,
+          relatedId: answer.question,
+        });
+        notifyUser(question.author, notif);
+      }
       const notif = await Notification.create({
         recipient: answer.author,
         type: 'answer_approved',
@@ -208,6 +219,11 @@ const approveAnswer = async (req, res) => {
         relatedId: answer.question,
       });
       notifyUser(answer.author, notif);
+    }
+
+    const author = await User.findById(answer.author);
+    if (author) {
+      await author.awardPoints('answer_approved', 20, answer._id);
     }
 
     res.json({ success: true, answer });
@@ -225,6 +241,12 @@ const rejectAnswer = async (req, res) => {
       { new: true }
     );
     if (!answer) return res.status(404).json({ message: 'Answer not found' });
+
+    const author = await User.findById(answer.author);
+    if (author) {
+      await author.awardPoints('answer_rejected', -5, answer._id);
+    }
+
     res.json({ success: true, answer });
   } catch (error) {
     res.status(500).json({ message: error.message });

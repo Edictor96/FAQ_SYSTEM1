@@ -83,7 +83,7 @@ const AdminArea = () => {
   useEffect(() => {
     if (activeTab === 'faq manager' && isSuperAdmin) fetchFaqs();
     if (activeTab === 'audit log' && isSuperAdmin) fetchAuditLogs();
-    if (activeTab === 'pending answers') fetchPendingAnswers();
+    if (activeTab === 'answer center') fetchPendingAnswers();
   }, [activeTab]);
 
   const fetchData = async () => {
@@ -283,7 +283,7 @@ const AdminArea = () => {
   if (error) return <div className="alert-error">{error}</div>;
 
   const openQueries = queries.filter(q => q.status === 'open');
-  const tabs = ['overview', 'questions', 'users', 'unresolved queries', 'pending answers',
+  const tabs = ['overview', 'questions', 'users', 'unresolved queries', 'answer center',
     ...(isSuperAdmin ? ['faq manager', 'audit log'] : [])
   ];
 
@@ -314,7 +314,7 @@ const AdminArea = () => {
           {[
             { label: 'Total Users', value: stats.totalUsers, tab: 'users', color: '#6366f1' },
             { label: 'Total Questions', value: stats.totalQuestions, tab: 'questions', color: '#f59e0b' },
-            { label: 'Total Answers', value: stats.totalAnswers, tab: null, color: '#10b981' },
+            { label: 'Total Answers', value: stats.totalAnswers, tab: 'answer center', color: '#10b981' },
             { label: 'Total FAQs', value: stats.totalFaqs, tab: isSuperAdmin ? 'faq manager' : null, color: '#3b82f6' },
             { label: 'Unresolved', value: openQueries.length, tab: 'unresolved queries', color: '#ef4444' },
           ].map(({ label, value, tab, color }) => (
@@ -350,7 +350,7 @@ const AdminArea = () => {
                 {openQueries.length}
               </span>
             )}
-            {tab === 'pending answers' && stats?.pendingAnswers > 0 && (
+            {tab === 'answer center' && stats?.pendingAnswers > 0 && (
               <span style={{ marginLeft: 6, background: '#f59e0b', color: '#fff', borderRadius: 20, padding: '1px 7px', fontSize: 11, fontWeight: 700 }}>
                 {stats.pendingAnswers}
               </span>
@@ -535,8 +535,8 @@ const AdminArea = () => {
         </div>
       )}
 
-      {/* Pending Answers Tab */}
-      {activeTab === 'pending answers' && (
+      {/* Answer Center Tab */}
+      {activeTab === 'answer center' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {answersLoading && <p style={{ color: 'var(--text-muted)' }}>Loading...</p>}
           {!answersLoading && pendingAnswers.length === 0 && <p style={{ color: 'var(--text-muted)' }}>No pending answers 🎉</p>}
