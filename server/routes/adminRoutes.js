@@ -6,13 +6,13 @@ const router = Router();
 const isAdmin = authorizeRoles('super_admin', 'admin');
 const isSuperAdmin = authorizeRoles('super_admin');
 
+router.get('/leaderboard', authenticateUser, adminController.getLeaderboard);
 router.use(authenticateUser, isAdmin);
 
 // Stats, users, leaderboard
 router.get('/stats', adminController.getStats);
 router.get('/users', adminController.getUsers);
 router.get('/users/:id', adminController.getUserById);
-router.get('/leaderboard', adminController.getLeaderboard);
 
 // Role management
 router.patch('/users/:id/promote', isAdmin, adminController.promoteToAdmin);

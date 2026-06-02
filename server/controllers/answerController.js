@@ -253,6 +253,18 @@ const rejectAnswer = async (req, res) => {
   }
 };
 
+const getAllAnswers = async (req, res) => {
+  try {
+    const answers = await Answer.find({})
+      .populate('author', 'name email points role')
+      .populate('question', 'title')
+      .sort({ createdAt: -1 });
+    res.json(answers);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   createAnswer,
   getAnswersByQuestionId,
@@ -262,4 +274,5 @@ module.exports = {
   acceptAnswer,
   approveAnswer,
   rejectAnswer,
+  getAllAnswers,
 };

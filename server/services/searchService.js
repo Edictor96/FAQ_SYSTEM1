@@ -188,6 +188,54 @@ async function getSuggestions(query) {
   }));
 }
 
+async function generateGeneralAnswer(userQuery) {
+  if (!LLM_API_KEY) {
+    return {
+      answer: "Hello! How can I help you today?",
+      confidence: 0,
+    };
+  }
+
+  try {
+    const { data } = await axios.post(
+      LLM_ENDPOINT,
+      {
+        model: LLM_MODEL,
+        messages: [
+          {
+            role: 'system',
+            content:
+              'You are a friendly chatbot. Respond naturally to greetings, small talk, and general conversation. Keep responses short.',
+          },
+          {
+            role: 'user',
+            content: userQuery,
+          },
+        ],
+        temperature: 0.7,
+        max_tokens: 150,
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${LLM_API_KEY}`,
+        },
+        timeout: 10000,
+      }
+    );
+
+    return {
+      answer: data.choices?.[0]?.message?.content?.trim() || 'Hello!',
+      confidence: 0,
+    };
+  } catch {
+    return {
+      answer: 'Hello! How can I help you today?',
+      confidence: 0,
+    };
+  }
+}
+
 async function generateAnswer(userQuery, sources) {
   if (!sources || sources.length === 0) {
     return {
@@ -202,6 +250,9 @@ async function generateAnswer(userQuery, sources) {
 
   const avgScore = sources.reduce((sum, s) => sum + s.score, 0) / sources.length;
   const confidence = Math.round(avgScore * 100) / 100;
+  console.log('Query:', userQuery);
+console.log('Top score:', sources[0]?.score);
+console.log('Confidence:', confidence);
 
   if (!LLM_API_KEY) {
     const best = sources[0];
@@ -320,6 +371,7 @@ module.exports = {
   searchSimilar,
   getSuggestions,
   generateAnswer,
+  generateGeneralAnswer,
   indexAllFaqs,
   indexOverview,
   buildEmbeddingsCache,

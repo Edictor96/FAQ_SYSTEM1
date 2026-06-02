@@ -1,5 +1,10 @@
 const { AppError } = require('../middleware/errorHandler');
-const { searchSimilar, getSuggestions, generateAnswer } = require('../services/searchService');
+const {
+  searchSimilar,
+  getSuggestions,
+  generateAnswer,
+  generateGeneralAnswer,
+} = require('../services/searchService');
 
 const searchCache = new Map();
 const CACHE_TTL = 5 * 60 * 1000;
@@ -26,7 +31,15 @@ exports.search = async (req, res, next) => {
     }
 
     const sources = await searchSimilar(trimmed, 5);
-    const { answer, confidence } = await generateAnswer(trimmed, sources);
+const topScore = sources?.[0]?.score || 0;
+
+let answer, confidence;
+
+if (topScore < 0.25) {
+  ({ answer, confidence } = await generateGeneralAnswer(trimmed));
+} else {
+  ({ answer, confidence } = await generateAnswer(trimmed, sources));
+}
     console.log(`Query: "${trimmed}" | Sources: ${sources.length} | Confidence: ${confidence}`);
 
     const data = {
@@ -49,8 +62,12 @@ exports.search = async (req, res, next) => {
 
     searchCache.set(trimmed, { data, timestamp: Date.now() });
 
-    // Auto-save unresolved queries
-    if (req.user && (sources.length === 0 || confidence < 0.4)) {
+    // Auto-save unresolved FAQ queries only
+if (
+  req.user &&
+  topScore >= 0.25 &&
+  confidence < 0.4
+) {
       try {
         console.log('Attempting to save query for user:', req.user._id, 'Query:', trimmed);
         const Query = require('../models/Query');
