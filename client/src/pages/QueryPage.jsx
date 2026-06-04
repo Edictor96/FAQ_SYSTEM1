@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
+import RecentSearchesPanel from '../components/RecentSearchesPanel';
 
 export default function QueryPage() {
   const { user, logout } = useAuth();
@@ -63,6 +64,10 @@ export default function QueryPage() {
     await logout();
     navigate('/login', { replace: true });
     toast.success('Logged out');
+  };
+
+  const handleRecentSelect = (value) => {
+    setForm((prev) => ({ ...prev, question: value }));
   };
 
   return (
@@ -145,6 +150,10 @@ export default function QueryPage() {
               {loading ? 'Submitting...' : 'Submit Query'}
             </button>
           </form>
+
+          <div style={{ marginTop: '1.5rem' }}>
+            <RecentSearchesPanel title="Recent searches" onSelect={handleRecentSelect} />
+          </div>
         </div>
       </main>
     </div>
