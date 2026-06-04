@@ -47,9 +47,14 @@ const getAnswersByQuestionId = async (req, res) => {
   try {
     const isAdmin = ['admin', 'super_admin'].includes(req.user.role);
     const filter = { question: req.params.questionId };
-    if (!isAdmin) filter.status = 'approved';
+    if (!isAdmin) {
+      filter.$or = [
+        { status: 'approved' },
+        { author: req.user._id, status: 'pending' },
+      ];
+    }
     const answers = await Answer.find(filter)
-      .populate('author', 'name email points')
+      .populate('author', 'name email points role')
       .sort({ createdAt: 1 });
     res.json(answers);
   } catch (error) {
@@ -253,6 +258,18 @@ const rejectAnswer = async (req, res) => {
   }
 };
 
+const getAllAnswers = async (req, res) => {
+  try {
+    const answers = await Answer.find({})
+      .populate('author', 'name email points role')
+      .populate('question', 'title')
+      .sort({ createdAt: -1 });
+    res.json(answers);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   createAnswer,
   getAnswersByQuestionId,
@@ -262,4 +279,5 @@ module.exports = {
   acceptAnswer,
   approveAnswer,
   rejectAnswer,
+  getAllAnswers,
 };

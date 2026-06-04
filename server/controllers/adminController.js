@@ -1,6 +1,7 @@
 const User = require('../models/User');
 const Answer = require('../models/Answer');
 const Question = require('../models/Question');
+const Faq = require('../models/Faq');
 const AuditLog = require('../models/AuditLog');
 const { AppError } = require('../middleware/errorHandler');
 
@@ -232,7 +233,6 @@ exports.getAuditLogs = async (req, res, next) => {
     const logs = await AuditLog.find({})
       .populate('performedBy', 'name email role')
       .populate('targetUser', 'name email role')
-      .populate('targetFaq', 'question')
       .sort({ createdAt: -1 })
       .limit(100);
     res.json({ success: true, logs });
@@ -262,7 +262,10 @@ exports.getPendingAnswers = async (req, res, next) => {
 
 exports.getLeaderboard = async (req, res, next) => {
   try {
-    const users = await User.find({}).select('name email points role').sort({ points: -1 }).limit(20);
+    const users = await User.find({ role: 'intern', points: { $gt: 0 } })
+      .select('name email points role')
+      .sort({ points: -1 })
+      .limit(20);
     res.json({ success: true, leaderboard: users });
   } catch (err) { next(err); }
 };

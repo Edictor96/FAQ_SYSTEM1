@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import adminService from '../services/adminService';
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
+import ConfirmModal from '../components/ConfirmModal';
 
 // Custom animated checkbox
 const Checkbox = ({ checked, onChange }) => (
@@ -77,6 +78,10 @@ const AdminArea = () => {
   const [selectedQuestions, setSelectedQuestions] = useState(new Set());
   const [selectedUsers, setSelectedUsers] = useState(new Set());
   const [selectedQueries, setSelectedQueries] = useState(new Set());
+  const [respondModal, setRespondModal] = useState({ open: false, query: null, response: '' });
+  const [toast, setToast] = useState(null);
+  const [confirm, setConfirm] = useState(null);
+  const waitConfirm = (opts) => new Promise(resolve => { setConfirm({ ...opts, resolve }); });
 
   useEffect(() => { fetchData(); }, []);
 
@@ -153,104 +158,109 @@ const AdminArea = () => {
   };
 
   const handleDeleteQuestion = async (id) => {
-    if (!window.confirm('Delete this question?')) return;
+    const ok = await waitConfirm({ title: 'Delete Question', message: 'Delete this question?', confirmLabel: 'Delete', variant: 'danger' });
+    if (!ok) return;
     try {
       const { default: questionService } = await import('../services/questionService');
       await questionService.deleteQuestion(id);
       fetchData();
-    } catch { alert('Failed to delete question'); }
+    } catch { setToast({ type: 'error', message: 'Failed to delete question' }); }
   };
 
   const handleBulkDeleteQuestions = async () => {
     if (!selectedQuestions.size) return;
-    if (!window.confirm(`Delete ${selectedQuestions.size} question(s)?`)) return;
+    const ok = await waitConfirm({ title: 'Delete Questions', message: `Delete ${selectedQuestions.size} question(s)?`, confirmLabel: 'Delete', variant: 'danger' });
+    if (!ok) return;
     try {
       const { default: questionService } = await import('../services/questionService');
       await Promise.all([...selectedQuestions].map(id => questionService.deleteQuestion(id)));
       setSelectedQuestions(new Set());
       fetchData();
-    } catch { alert('Failed to delete some questions'); }
+    } catch { setToast({ type: 'error', message: 'Failed to delete some questions' }); }
   };
 
   const handleBulkDeleteUsers = async () => {
     if (!selectedUsers.size) return;
-    if (!window.confirm(`Delete ${selectedUsers.size} user(s)?`)) return;
+    const ok = await waitConfirm({ title: 'Delete Users', message: `Delete ${selectedUsers.size} user(s)?`, confirmLabel: 'Delete', variant: 'danger' });
+    if (!ok) return;
     try {
       await Promise.all([...selectedUsers].map(id => adminService.deleteUser(id)));
       setSelectedUsers(new Set());
       fetchData();
-    } catch { alert('Failed to delete some users'); }
+    } catch { setToast({ type: 'error', message: 'Failed to delete some users' }); }
   };
 
   const handleBulkDeleteQueries = async () => {
     if (!selectedQueries.size) return;
-    if (!window.confirm(`Delete ${selectedQueries.size} query(ies)?`)) return;
+    const ok = await waitConfirm({ title: 'Delete Queries', message: `Delete ${selectedQueries.size} query(ies)?`, confirmLabel: 'Delete', variant: 'danger' });
+    if (!ok) return;
     try {
       await Promise.all([...selectedQueries].map(id => api.delete(`/queries/${id}`)));
       setSelectedQueries(new Set());
       fetchData();
-    } catch { alert('Failed to delete some queries'); }
+    } catch { setToast({ type: 'error', message: 'Failed to delete some queries' }); }
   };
 
   const handlePromoteToFaq = async (q) => {
-    const answerText = prompt('Enter the official answer for this FAQ:');
-    if (!answerText) return;
     try {
-      await adminService.createFaq({ question: q.title, answer: answerText, category: 'general' });
-      alert('Successfully promoted to FAQ!');
-    } catch { alert('Failed to promote to FAQ'); }
+      await adminService.createFaq({ question: q.title, answer: q.title, category: 'general' });
+      setToast({ type: 'success', message: 'Successfully promoted to FAQ!' });
+    } catch { setToast({ type: 'error', message: 'Failed to promote to FAQ' }); }
   };
 
   const handlePromoteUser = async (id) => {
-    if (!window.confirm('Promote this user to admin?')) return;
+    const ok = await waitConfirm({ title: 'Promote User', message: 'Promote this user to admin?', confirmLabel: 'Promote' });
+    if (!ok) return;
     try { await adminService.promoteUser(id); fetchData(); }
-    catch (err) { alert(err.response?.data?.message || 'Failed to promote user'); }
+    catch (err) { setToast({ type: 'error', message: err.response?.data?.message || 'Failed to promote user' }); }
   };
 
   const handlePromoteToSuperAdmin = async (id) => {
-    if (!window.confirm('Promote this user to super_admin?')) return;
+    const ok = await waitConfirm({ title: 'Promote to Super Admin', message: 'Promote this user to super_admin?', confirmLabel: 'Promote' });
+    if (!ok) return;
     try { await adminService.promoteToSuperAdmin(id); fetchData(); }
-    catch (err) { alert(err.response?.data?.message || 'Failed'); }
+    catch (err) { setToast({ type: 'error', message: err.response?.data?.message || 'Failed' }); }
   };
 
   const handleDemoteAdmin = async (id) => {
-    if (!window.confirm('Demote this user to intern?')) return;
+    const ok = await waitConfirm({ title: 'Demote User', message: 'Demote this user to intern?', confirmLabel: 'Demote', variant: 'danger' });
+    if (!ok) return;
     try { await adminService.demoteAdmin(id); fetchData(); }
-    catch (err) { alert(err.response?.data?.message || 'Failed to demote'); }
+    catch (err) { setToast({ type: 'error', message: err.response?.data?.message || 'Failed to demote' }); }
   };
 
   const handleDeleteUser = async (id) => {
-    if (!window.confirm('Delete this user? This cannot be undone.')) return;
+    const ok = await waitConfirm({ title: 'Delete User', message: 'Delete this user? This cannot be undone.', confirmLabel: 'Delete', variant: 'danger' });
+    if (!ok) return;
     try { await adminService.deleteUser(id); fetchData(); }
-    catch (err) { alert(err.response?.data?.message || 'Failed to delete user'); }
+    catch (err) { setToast({ type: 'error', message: err.response?.data?.message || 'Failed to delete user' }); }
   };
 
   const handleResolveQuery = async (id, response) => {
     try { await api.patch(`/queries/${id}/respond`, { response, status: 'resolved' }); fetchData(); }
-    catch { alert('Failed to resolve query'); }
+    catch { setToast({ type: 'error', message: 'Failed to resolve query' }); }
   };
 
   const handlePromoteQueryToFaq = async (q) => {
-    const answerText = prompt('Enter the official answer for this FAQ:');
-    if (!answerText) return;
     try {
-      await adminService.createFaq({ question: q.question, answer: answerText, category: 'general' });
-      await api.patch(`/queries/${q._id}/respond`, { status: 'resolved', response: answerText });
-      alert('Promoted to FAQ and marked resolved!');
+      await adminService.createFaq({ question: q.question, answer: q.adminResponse || q.question, category: 'general' });
+      await api.delete(`/queries/${q._id}`);
+      setToast({ type: 'success', message: 'Promoted to FAQ and deleted from queries!' });
       fetchData();
-    } catch { alert('Failed to promote query to FAQ'); }
+    } catch { setToast({ type: 'error', message: 'Failed to promote query to FAQ' }); }
   };
 
   const handleDeleteQuery = async (id) => {
-    if (!window.confirm('Delete this query?')) return;
+    const ok = await waitConfirm({ title: 'Delete Query', message: 'Delete this query?', confirmLabel: 'Delete', variant: 'danger' });
+    if (!ok) return;
     try { await api.delete(`/queries/${id}`); fetchData(); }
-    catch { alert('Failed to delete query'); }
+    catch { setToast({ type: 'error', message: 'Failed to delete query' }); }
   };
 
   // FAQ Manager handlers
   const handleFaqSubmit = async () => {
     if (!faqForm.question || !faqForm.answer || !faqForm.category) {
-      alert('All fields required'); return;
+      setToast({ type: 'error', message: 'All fields required' }); return;
     }
     setFaqLoading(true);
     try {
@@ -262,7 +272,7 @@ const AdminArea = () => {
       setFaqForm({ question: '', answer: '', category: '' });
       setEditingFaq(null);
       fetchFaqs();
-    } catch (err) { alert(err.response?.data?.message || 'Failed to save FAQ'); }
+    } catch (err) { setToast({ type: 'error', message: err.response?.data?.message || 'Failed to save FAQ' }); }
     finally { setFaqLoading(false); }
   };
 
@@ -272,9 +282,10 @@ const AdminArea = () => {
   };
 
   const handleDeleteFaq = async (id) => {
-    if (!window.confirm('Delete this FAQ? It will be removed from search too.')) return;
+    const ok = await waitConfirm({ title: 'Delete FAQ', message: 'Delete this FAQ? It will be removed from search too.', confirmLabel: 'Delete', variant: 'danger' });
+    if (!ok) return;
     try { await adminService.deleteFaq(id); fetchFaqs(); }
-    catch { alert('Failed to delete FAQ'); }
+    catch { setToast({ type: 'error', message: 'Failed to delete FAQ' }); }
   };
 
   if (loading) return <div style={{ padding: 40, color: 'var(--text-muted)' }}>Loading admin area...</div>;
@@ -518,7 +529,7 @@ const AdminArea = () => {
                 <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
                   <button onClick={() => handlePromoteQueryToFaq(q)} style={{ padding: '7px 14px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--success)', background: 'rgba(16,185,129,0.08)', color: 'var(--success)', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>⬆ Promote to FAQ</button>
                   {q.status !== 'resolved' && (
-                    <button onClick={() => { const r = prompt('Enter your response:'); if (r) handleResolveQuery(q._id, r); }} style={{ padding: '7px 14px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--accent)', background: 'rgba(99,102,241,0.08)', color: 'var(--accent)', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>✓ Respond & Resolve</button>
+                    <button onClick={() => setRespondModal({ open: true, query: q, response: '' })} style={{ padding: '7px 14px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--accent)', background: 'rgba(99,102,241,0.08)', color: 'var(--accent)', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>✓ Respond & Resolve</button>
                   )}
                   <button onClick={() => handleDeleteQuery(q._id)} style={{ padding: '7px 14px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--error)', background: 'rgba(220,38,38,0.08)', color: 'var(--error)', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>🗑 Delete</button>
                 </div>
@@ -546,24 +557,24 @@ const AdminArea = () => {
         borderRadius: 'var(--radius-md)', padding: '16px 20px'
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16 }}>
-          <div style={{ flex: 1 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
             {a.isAccepted && (
               <span style={{ background: 'rgba(16,185,129,0.1)', color: 'var(--success)', padding: '2px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, marginBottom: 8, display: 'inline-block' }}>
                 ✓ Accepted
               </span>
             )}
-            <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 2 }}>
+            <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 2, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 4 }}>
               {a.author?.name || 'Unknown'}
-              <span style={{ marginLeft: 8, fontSize: 11, color: 'var(--accent)' }}>⭐ {a.author?.points || 0} pts</span>
+              <span style={{ fontSize: 11, color: 'var(--accent)' }}>⭐ {a.author?.points || 0} pts</span>
               <RoleBadge role={a.author?.role || 'intern'} />
             </div>
             <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 8 }}>
               {a.author?.email} · {new Date(a.createdAt).toLocaleString()}
             </div>
-            <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 6, whiteSpace: 'pre-wrap' }}>
+            <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 6, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
               {a.content?.slice(0, 300)}{a.content?.length > 300 ? '...' : ''}
             </div>
-            <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+            <div style={{ fontSize: 12, color: 'var(--text-muted)', wordBreak: 'break-word' }}>
               On: <strong>{a.question?.title || 'Deleted question'}</strong>
               <span style={{ marginLeft: 12, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
   <span style={{ color: 'var(--text-muted)', fontWeight: 700 }}>▲</span> {a.upvotes?.length || 0}
@@ -575,7 +586,7 @@ const AdminArea = () => {
             {!a.isAccepted && (
               <button onClick={async () => {
                 try { await api.put(`/answers/${a._id}/accept`); fetchPendingAnswers(); }
-                catch { alert('Failed to accept'); }
+                catch { setToast({ type: 'error', message: 'Failed to accept' }); }
               }} style={{
                 padding: '7px 16px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--success)',
                 background: 'rgba(16,185,129,0.08)', color: 'var(--success)',
@@ -583,9 +594,10 @@ const AdminArea = () => {
               }}>✓ Accept</button>
             )}
             <button onClick={async () => {
-              if (!window.confirm('Delete this answer?')) return;
+              const ok = await waitConfirm({ title: 'Delete Answer', message: 'Delete this answer?', confirmLabel: 'Delete', variant: 'danger' });
+              if (!ok) return;
               try { await api.delete(`/answers/${a._id}`); fetchPendingAnswers(); }
-              catch { alert('Failed to delete'); }
+              catch { setToast({ type: 'error', message: 'Failed to delete' }); }
             }} style={{
               padding: '7px 16px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--error)',
               background: 'rgba(220,38,38,0.08)', color: 'var(--error)',
@@ -593,9 +605,10 @@ const AdminArea = () => {
             }}>🗑 Delete</button>
             {a.author?.role !== 'super_admin' && (
               <button onClick={async () => {
-                if (!window.confirm(`Ban ${a.author?.name}? This will delete their account.`)) return;
+                const ok = await waitConfirm({ title: 'Ban User', message: `Ban ${a.author?.name}? This will delete their account.`, confirmLabel: 'Ban', variant: 'danger' });
+                if (!ok) return;
                 try { await adminService.deleteUser(a.author._id); fetchPendingAnswers(); fetchData(); }
-                catch { alert('Failed to ban user'); }
+                catch { setToast({ type: 'error', message: 'Failed to ban user' }); }
               }} style={{
                 padding: '7px 16px', borderRadius: 'var(--radius-sm)', border: '1px solid #f59e0b',
                 background: 'rgba(245,158,11,0.08)', color: '#f59e0b',
@@ -660,6 +673,109 @@ const AdminArea = () => {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Toast Modal */}
+      {toast && (
+        <div onClick={() => setToast(null)} style={{
+          position: 'fixed', inset: 0, zIndex: 99999,
+          background: 'rgba(0,0,0,0.4)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <div onClick={e => e.stopPropagation()} style={{
+            background: 'var(--bg-card)', borderRadius: 'var(--radius-md)',
+            padding: 32, width: 420, maxWidth: '90vw',
+            boxShadow: '0 25px 60px rgba(0,0,0,0.3)',
+            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16,
+            textAlign: 'center',
+          }}>
+            <div style={{
+              width: 52, height: 52, borderRadius: '50%',
+              background: toast.type === 'success' ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26,
+            }}>
+              {toast.type === 'success' ? '✅' : '❌'}
+            </div>
+            <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary)' }}>
+              {toast.type === 'success' ? 'Success' : 'Error'}
+            </div>
+            <div style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+              {toast.message}
+            </div>
+            <button onClick={() => setToast(null)} style={{
+              marginTop: 8, padding: '9px 28px', borderRadius: 'var(--radius-sm)',
+              border: 'none', background: 'var(--accent)', color: '#fff',
+              fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+            }}>OK</button>
+          </div>
+        </div>
+      )}
+
+      {/* Confirm Modal */}
+      <ConfirmModal
+        open={!!confirm}
+        title={confirm?.title}
+        message={confirm?.message}
+        confirmLabel={confirm?.confirmLabel}
+        cancelLabel={confirm?.cancelLabel}
+        variant={confirm?.variant}
+        onConfirm={() => { confirm?.resolve(true); setConfirm(null); }}
+        onCancel={() => { confirm?.resolve(false); setConfirm(null); }}
+      />
+
+      {/* Respond Modal */}
+      {respondModal.open && (
+        <div onClick={() => setRespondModal({ open: false, query: null, response: '' })} style={{
+          position: 'fixed', inset: 0, zIndex: 99999,
+          background: 'rgba(0,0,0,0.5)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <div onClick={e => e.stopPropagation()} style={{
+            background: 'var(--bg-card)', borderRadius: 'var(--radius-md)',
+            padding: 28, width: 500, maxWidth: '90vw',
+            boxShadow: '0 25px 60px rgba(0,0,0,0.3)',
+            display: 'flex', flexDirection: 'column', gap: 16,
+          }}>
+            <h3 style={{ fontSize: 17, fontWeight: 700, margin: 0 }}>Respond & Resolve</h3>
+            <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
+              <strong style={{ color: 'var(--text-primary)' }}>Query:</strong> {respondModal.query.question}
+            </div>
+            <textarea
+              autoFocus
+              placeholder="Type your response..."
+              value={respondModal.response}
+              onChange={e => setRespondModal(m => ({ ...m, response: e.target.value }))}
+              style={{
+                width: '100%', minHeight: 120, resize: 'vertical', boxSizing: 'border-box',
+                padding: '12px 14px', borderRadius: 'var(--radius-sm)',
+                border: '1px solid var(--border)', background: 'var(--bg-secondary)',
+                color: 'var(--text-primary)', fontSize: 14, fontFamily: 'inherit',
+                outline: 'none',
+              }}
+            />
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+              <button onClick={() => setRespondModal({ open: false, query: null, response: '' })} style={{
+                padding: '9px 20px', borderRadius: 'var(--radius-sm)',
+                border: '1px solid var(--border)', background: 'transparent',
+                color: 'var(--text-secondary)', fontSize: 14, fontWeight: 600,
+                cursor: 'pointer', fontFamily: 'inherit',
+              }}>Cancel</button>
+              <button
+                disabled={!respondModal.response.trim()}
+                onClick={() => {
+                  handleResolveQuery(respondModal.query._id, respondModal.response);
+                  setRespondModal({ open: false, query: null, response: '' });
+                }}
+                style={{
+                  padding: '9px 20px', borderRadius: 'var(--radius-sm)', border: 'none',
+                  background: 'var(--accent)', color: '#fff', fontSize: 14, fontWeight: 600,
+                  cursor: respondModal.response.trim() ? 'pointer' : 'not-allowed',
+                  opacity: respondModal.response.trim() ? 1 : 0.5, fontFamily: 'inherit',
+                }}
+              >Resolve</button>
+            </div>
+          </div>
         </div>
       )}
 

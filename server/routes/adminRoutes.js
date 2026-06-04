@@ -6,13 +6,15 @@ const router = Router();
 const isAdmin = authorizeRoles('super_admin', 'admin');
 const isSuperAdmin = authorizeRoles('super_admin');
 
+// Leaderboard — visible to all authenticated users
+router.get('/leaderboard', authenticateUser, adminController.getLeaderboard);
+
 router.use(authenticateUser, isAdmin);
 
-// Stats, users, leaderboard
+// Stats, users
 router.get('/stats', adminController.getStats);
 router.get('/users', adminController.getUsers);
 router.get('/users/:id', adminController.getUserById);
-router.get('/leaderboard', adminController.getLeaderboard);
 
 // Role management
 router.patch('/users/:id/promote', isAdmin, adminController.promoteToAdmin);
@@ -28,11 +30,11 @@ router.post('/questions/:id/promote-faq', adminController.promoteQuestionToFaq);
 // Pending answers moderation
 router.get('/answers/pending', adminController.getPendingAnswers);
 
-// FAQ CRUD (super_admin only)
-router.get('/faqs', isSuperAdmin, adminController.getAllFaqs);
-router.post('/faqs', isSuperAdmin, adminController.createFaq);
-router.patch('/faqs/:id', isSuperAdmin, adminController.updateFaq);
-router.delete('/faqs/:id', isSuperAdmin, adminController.deleteFaq);
+// FAQ CRUD (admin / super_admin)
+router.get('/faqs', isAdmin, adminController.getAllFaqs);
+router.post('/faqs', isAdmin, adminController.createFaq);
+router.patch('/faqs/:id', isAdmin, adminController.updateFaq);
+router.delete('/faqs/:id', isAdmin, adminController.deleteFaq);
 
 // Audit log (super_admin only)
 router.get('/audit-logs', isSuperAdmin, adminController.getAuditLogs);
