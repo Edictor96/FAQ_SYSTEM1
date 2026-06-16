@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const { getAllowedOrigins } = require('../config/env');
 
 let io = null;
 
@@ -10,7 +11,7 @@ function setupSocket(server) {
 
   io = new Server(server, {
     cors: {
-      origin: [process.env.CLIENT_URL || 'http://localhost:5173', 'http://localhost:5174'],
+      origin: getAllowedOrigins(),
       credentials: true,
     },
   });

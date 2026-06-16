@@ -28,20 +28,20 @@ const sendTokens = (user, statusCode, res) => {
   const refreshToken = signRefreshToken(user._id);
 
   user.refreshToken = refreshToken;
-  user.save();
-
-  res.status(statusCode).json({
-    success: true,
-    accessToken,
-    refreshToken,
-    user: {
-      id: user._id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      isVerified: user.isVerified,
-      points: user.points || 0,
-    },
+  return user.save().then(() => {
+    res.status(statusCode).json({
+      success: true,
+      accessToken,
+      refreshToken,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        isVerified: user.isVerified,
+        points: user.points || 0,
+      },
+    });
   });
 };
 
@@ -74,7 +74,7 @@ exports.register = async (req, res, next) => {
       notifyUser(admin._id, notif);
     }
 
-    sendTokens(user, 201, res);
+    await sendTokens(user, 201, res);
   } catch (err) {
     next(err);
   }
@@ -107,7 +107,7 @@ exports.login = async (req, res, next) => {
     user.resetLoginAttempts();
     await user.save();
 
-    sendTokens(user, 200, res);
+    await sendTokens(user, 200, res);
   } catch (err) {
     next(err);
   }
@@ -151,7 +151,7 @@ exports.googleAuth = async (req, res, next) => {
       });
     }
 
-    sendTokens(user, 200, res);
+    await sendTokens(user, 200, res);
   } catch (err) {
     next(err);
   }

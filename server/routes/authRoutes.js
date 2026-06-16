@@ -1,7 +1,7 @@
 const { Router } = require('express');
 const rateLimit = require('express-rate-limit');
 const authController = require('../controllers/authController');
-const { authenticateUser, authorizeRoles } = require('../middleware/auth');
+const { authenticateUser } = require('../middleware/auth');
 const {
   validate,
   registerSchema,
@@ -38,25 +38,5 @@ router.post('/forgot-password', forgotLimiter, validate(forgotPasswordSchema), a
 router.put('/reset-password/:token', validate(resetPasswordSchema), authController.resetPassword);
 router.get('/me', authenticateUser, authController.getMe);
 router.put('/profile', authenticateUser, authController.updateProfile);
-
-router.post('/seed-admin', async (req, res) => {
-  try {
-    const User = require('../models/User');
-    const existing = await User.findOne({ email: 'sudarshansudarshan@gmail.com' });
-    if (existing) {
-      return res.json({ success: true, message: 'Admin already exists', email: existing.email, role: existing.role });
-    }
-    const admin = await User.create({
-      name: 'Sudarshan Admin',
-      email: 'sudarshansudarshan@gmail.com',
-      password: 'Admin@123',
-      role: 'super_admin',
-      isVerified: true,
-    });
-    res.status(201).json({ success: true, message: 'Super admin created', email: admin.email });
-  } catch (err) {
-    res.status(400).json({ success: false, message: err.message });
-  }
-});
 
 module.exports = router;

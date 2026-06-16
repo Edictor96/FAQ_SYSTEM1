@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { createQuestion, getQuestions, getQuestionById, getMyQuestions, deleteQuestion } = require('../controllers/questionController');
 const { authenticateUser: protect, authorizeRoles } = require('../middleware/auth');
-const admin = authorizeRoles('admin');
+const admin = authorizeRoles('admin', 'super_admin');
 
 router.route('/')
   .post(protect, createQuestion)

@@ -93,8 +93,20 @@ JWT_REFRESH_SECRET=your_refresh_secret
 GOOGLE_CLIENT_ID=your_google_client_id
 GOOGLE_CLIENT_SECRET=your_google_client_secret
 CLIENT_URL=http://localhost:5173
-GEMINI_API_KEY=your_gemini_api_key
-GROQ_API_KEY=your_groq_api_key
+CLIENT_URLS=http://localhost:5173,http://localhost:5174
+LLM_ENDPOINT=https://api.openai.com/v1/chat/completions
+LLM_API_KEY=your_llm_api_key
+LLM_MODEL=gpt-4o-mini
+CHROMA_HOST=localhost
+CHROMA_PORT=8000
+CHROMA_COLLECTION=faq_embeddings
+POINTS_JOB_INTERVAL_MS=3600000
+```
+
+Create `client/.env`:
+```env
+VITE_API_BASE_URL=http://localhost:3000/api
+VITE_SOCKET_URL=http://localhost:3000
 ```
 
 **4. Run the project**
@@ -170,6 +182,30 @@ project-root/
 | GET | `/api/admin/users` | Get all users |
 | PUT | `/api/admin/users/:id/role` | Update user role |
 | GET | `/api/internship/overview` | Get programme overview |
+
+---
+
+## Vercel Deployment (Client)
+
+This repository is a split architecture:
+
+- `client` is a Vite SPA suitable for Vercel static hosting.
+- `server` is a long-running Node + Socket.IO API and should be hosted on a persistent backend platform (Render, Railway, Fly, VM, etc.), not Vercel serverless.
+
+### Vercel project settings
+
+- Framework Preset: `Vite`
+- Root Directory: `client`
+- Install Command: `npm install`
+- Build Command: `npm run build`
+- Output Directory: `dist`
+
+### Required Vercel environment variables (client)
+
+- `VITE_API_BASE_URL=https://<your-backend-domain>/api`
+- `VITE_SOCKET_URL=https://<your-backend-domain>`
+
+The SPA fallback rewrite is configured in `client/vercel.json` and excludes `/api` and `/socket.io` paths so API traffic is not rewritten to HTML.
 
 ---
 

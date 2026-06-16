@@ -20,7 +20,7 @@ export function SocketProvider({ children }) {
       return;
     }
 
-    const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || window.location.origin;
+    const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || (import.meta.env.DEV ? 'http://localhost:3000' : window.location.origin);
     const socket = io(SOCKET_URL, {
       auth: { token },
       transports: ['websocket', 'polling'],

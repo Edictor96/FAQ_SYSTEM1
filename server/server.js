@@ -23,6 +23,9 @@ const notificationRoutes = require('./routes/notificationRoutes');
 const { indexAllFaqs } = require('./services/searchService');
 const { errorHandler } = require('./middleware/errorHandler');
 const { setupSocket } = require('./services/socketService');
+const { validateEnv, getAllowedOrigins } = require('./config/env');
+
+validateEnv();
 
 const app = express();
 
@@ -39,7 +42,7 @@ app.use(helmet({
   },
 }));
 app.use(cors({
-  origin: [process.env.CLIENT_URL || 'http://localhost:5173', 'http://localhost:5174'],
+  origin: getAllowedOrigins(),
   credentials: true,
 }));
 app.use(cookieParser());
@@ -115,22 +118,12 @@ const seedFAQs = async () => {
 const server = http.createServer(app);
 setupSocket(server);
 
-const startServer = async () => {
-  try {
-    await connectDB();
-    await seedFAQs();
-    indexAllFaqs().then(count => {
-      if (count > 0) console.log(`Search: Indexed ${count} FAQs for semantic search`);
-    }).catch(() => {});
-    server.listen(PORT, () => {
-      console.log(`Server running on http://localhost:${PORT}`);
-    });
-// Apply pending points every hour
-setInterval(async () => {
+const runPendingPointsJob = async () => {
   try {
     const User = require('./models/User');
     const now = new Date();
     const users = await User.find({ 'pointsHistory.applied': false });
+
     for (const user of users) {
       let changed = false;
       for (const entry of user.pointsHistory) {
@@ -146,7 +139,20 @@ setInterval(async () => {
   } catch (e) {
     console.warn('Points job error:', e.message);
   }
-}, 60 * 60 * 1000);
+};
+
+const startServer = async () => {
+  try {
+    await connectDB();
+    await seedFAQs();
+    indexAllFaqs().then(count => {
+      if (count > 0) console.log(`Search: Indexed ${count} FAQs for semantic search`);
+    }).catch(() => {});
+    server.listen(PORT, () => {
+      console.log(`Server running on http://localhost:${PORT}`);
+    });
+    const pointsJobMs = Number(process.env.POINTS_JOB_INTERVAL_MS) || 60 * 60 * 1000;
+    setInterval(runPendingPointsJob, pointsJobMs);
 
   } catch (err) {
     console.error('Failed to start server:', err.message);
@@ -155,25 +161,3 @@ setInterval(async () => {
 };
 
 startServer();
-
-setInterval(async () => {
-  try {
-    const User = require('./models/User');
-    const now = new Date();
-    const users = await User.find({ 'pointsHistory.applied': false });
-
-    for (const user of users) {
-      let changed = false;
-      for (const entry of user.pointsHistory) {
-        if (!entry.applied && entry.appliedAt <= now) {
-          user.points = Math.max(0, (user.points || 0) + entry.points);
-          entry.applied = true;
-          changed = true;
-        }
-      }
-      if (changed) await user.save();
-    }
-  } catch (e) {
-    console.warn('Points job error:', e.message);
-  }
-}, 10 * 1000); 

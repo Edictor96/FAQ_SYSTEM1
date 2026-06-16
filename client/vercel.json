@@ -1,7 +1,16 @@
 {
+  "cleanUrls": true,
   "rewrites": [
     {
-      "source": "/(.*)",
+      "source": "/api",
+      "destination": "/api"
+    },
+    {
+      "source": "/socket.io",
+      "destination": "/socket.io"
+    },
+    {
+      "source": "/((?!api/|socket.io/).*)",
       "destination": "/index.html"
     }
   ]
