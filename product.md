@@ -315,4 +315,3 @@ project-root/
 - AI-generated FAQ suggestions for admin approval
 - Real-time co-editing on FAQ drafts
 - Mobile app (React Native)
-- 
