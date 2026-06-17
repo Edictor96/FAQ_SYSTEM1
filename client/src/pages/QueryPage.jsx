@@ -81,78 +81,143 @@ export default function QueryPage() {
   };
 
   return (
-    <div style={{ maxWidth: 600, margin: '0 auto', padding: '40px 20px' }}>
-      <div style={{ ...bgCard }}>
-        <h1 style={{ fontSize: 22, fontWeight: 700, marginBottom: 4 }}>Submit a Query</h1>
-        <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginBottom: 24 }}>
-          Didn't find what you were looking for? Let us know.
-        </p>
 
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-          <div>
-            <label htmlFor="q-question" style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6, color: 'var(--text-primary)' }}>
-              Question <span style={{ color: 'var(--error)' }}>*</span>
-            </label>
-            <input
-              id="q-question"
-              type="text"
-              placeholder="What would you like to know?"
-              value={form.question}
-              onChange={(e) => setForm((p) => ({ ...p, question: e.target.value }))}
-              style={inputStyle}
-              required
-            />
-          </div>
+  <div style={{ maxWidth: 600, margin: '0 auto', padding: '40px 20px' }}>
+    <div style={{ ...bgCard }}>
+      <h1 style={{ fontSize: 22, fontWeight: 700, marginBottom: 4 }}>
+        Submit a Query
+      </h1>
 
-          <div>
-            <label htmlFor="q-category" style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6, color: 'var(--text-primary)' }}>
-              Category
-            </label>
-            <select
-              id="q-category"
-              value={form.category}
-              onChange={(e) => setForm((p) => ({ ...p, category: e.target.value }))}
-              style={selectStyle}
-            >
-              {categories.map((c) => (
-                <option key={c} value={c}>{c.charAt(0).toUpperCase() + c.slice(1)}</option>
-              ))}
-            </select>
-          </div>
+```
+  <p
+    style={{
+      color: 'var(--text-secondary)',
+      fontSize: 14,
+      marginBottom: 24,
+    }}
+  >
+    Didn't find what you were looking for? Let us know.
+  </p>
 
-          <div>
-            <label htmlFor="q-desc" style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6, color: 'var(--text-primary)' }}>
-              Description <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>(optional)</span>
-            </label>
-            <textarea
-              id="q-desc"
-              placeholder="Provide any additional details..."
-              value={form.description}
-              onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
-              style={textareaStyle}
-            />
-          </div>
+  <form
+    onSubmit={handleSubmit}
+    style={{
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 18,
+    }}
+  >
+    {/* Question */}
+    <div>
+      <label
+        htmlFor="q-question"
+        style={{
+          display: 'block',
+          fontSize: 13,
+          fontWeight: 600,
+          marginBottom: 6,
+        }}
+      >
+        Question <span style={{ color: 'var(--error)' }}>*</span>
+      </label>
 
-            <button type="submit" className="btn-primary" disabled={loading}>
-              {loading ? 'Submitting...' : 'Submit Query'}
-            </button>
-          </form>
-
-          <div style={{ marginTop: '1.5rem' }}>
-            <RecentSearchesPanel title="Recent searches" onSelect={handleRecentSelect} />
-          </div>
-        </div>
-      </main>
-          <button type="submit" disabled={loading} style={{
-            padding: '11px 24px', borderRadius: 'var(--radius-sm)', border: 'none',
-            background: 'var(--accent)', color: '#fff', fontSize: 15, fontWeight: 600,
-            cursor: loading ? 'not-allowed' : 'pointer', fontFamily: 'inherit',
-            opacity: loading ? 0.7 : 1, alignSelf: 'flex-start',
-          }}>
-            {loading ? 'Submitting...' : 'Submit Query'}
-          </button>
-        </form>
-      </div>
+      <input
+        id="q-question"
+        type="text"
+        placeholder="What would you like to know?"
+        value={form.question}
+        onChange={(e) =>
+          setForm((p) => ({ ...p, question: e.target.value }))
+        }
+        style={inputStyle}
+        required
+      />
     </div>
-  );
+
+    {/* Category */}
+    <div>
+      <label
+        htmlFor="q-category"
+        style={{
+          display: 'block',
+          fontSize: 13,
+          fontWeight: 600,
+          marginBottom: 6,
+        }}
+      >
+        Category
+      </label>
+
+      <select
+        id="q-category"
+        value={form.category}
+        onChange={(e) =>
+          setForm((p) => ({ ...p, category: e.target.value }))
+        }
+        style={selectStyle}
+      >
+        {categories.map((c) => (
+          <option key={c} value={c}>
+            {c.charAt(0).toUpperCase() + c.slice(1)}
+          </option>
+        ))}
+      </select>
+    </div>
+
+    {/* Description */}
+    <div>
+      <label
+        htmlFor="q-desc"
+        style={{
+          display: 'block',
+          fontSize: 13,
+          fontWeight: 600,
+          marginBottom: 6,
+        }}
+      >
+        Description
+      </label>
+
+      <textarea
+        id="q-desc"
+        placeholder="Provide any additional details..."
+        value={form.description}
+        onChange={(e) =>
+          setForm((p) => ({ ...p, description: e.target.value }))
+        }
+        style={textareaStyle}
+      />
+    </div>
+
+    <button
+      type="submit"
+      disabled={loading}
+      style={{
+        padding: '11px 24px',
+        borderRadius: 'var(--radius-sm)',
+        border: 'none',
+        background: 'var(--accent)',
+        color: '#fff',
+        fontSize: 15,
+        fontWeight: 600,
+        cursor: loading ? 'not-allowed' : 'pointer',
+        opacity: loading ? 0.7 : 1,
+        alignSelf: 'flex-start',
+      }}
+    >
+      {loading ? 'Submitting...' : 'Submit Query'}
+    </button>
+  </form>
+
+  <div style={{ marginTop: '1.5rem' }}>
+    <RecentSearchesPanel
+      title="Recent searches"
+      onSelect={handleRecentSelect}
+    />
+  </div>
+</div>
+```
+
+  </div>
+)
 }
